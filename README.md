@@ -59,7 +59,7 @@ MCP_SIMULATION_FIXTURES=tests/simulations/mcp_responses.json
 Run the health check script to verify the connection:
 
 ```bash
-poetry run python scripts/mcp_sanity_check.py
+PYTHONPATH=src python3 scripts/mcp_sanity_check.py
 ```
 
 ### Supplying MCP tool calls from a workflow
@@ -88,3 +88,21 @@ Set `MCP_MODE=simulation` and point `MCP_SIMULATION_FIXTURES` at `tests/simulati
 
 - Template `.env` files live under `~/Desktop/KEYS_TOTATE` on this machine and remain outside version control.
 - The repository includes `.env.example` for reference only. Real credentials must never be committed; the pre-commit hook blocks accidental `.env` entries while allowing `.env.example`.
+
+## 6. CLI
+
+Common commands (no extra dependencies):
+
+```bash
+# Check MCP connectivity and tools
+PYTHONPATH=src python3 scripts/cli.py check --require-management
+
+# Run on a plan
+PYTHONPATH=src python3 scripts/cli.py run --plan project_plans/template_project_plan.yml
+
+# Resume a run (uses deliverables/<project>/state.json)
+PYTHONPATH=src python3 scripts/cli.py resume --plan project_plans/template_project_plan.yml
+
+# Package deliverables for transport
+PYTHONPATH=src python3 scripts/cli.py package --project "My New Project" --output out.zip
+```

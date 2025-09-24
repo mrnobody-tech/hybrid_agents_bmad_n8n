@@ -15,7 +15,7 @@ class Orchestrator:
         os.makedirs(self.deliverables_path, exist_ok=True)
 
         self.workflow = self._load_workflow()
-        self.state = self._initialize_state()
+        self.state = self._load_or_initialize_state()
 
         self.mcp_client = MCPClient.from_env()
         if self.mcp_client:
@@ -37,29 +37,48 @@ class Orchestrator:
         with open(workflow_path, 'r', encoding='utf-8') as f:
             return yaml.safe_load(f)
 
-    def _initialize_state(self) -> dict:
-        """Initialize the state with the full BMAD context."""
-        return {
+    def _load_or_initialize_state(self) -> dict:
+        """Load checkpoint if present; else initialize a fresh state."""
+        state_path = os.path.join(self.deliverables_path, "state.json")
+        if os.path.exists(state_path):
+            try:
+                import json
+                with open(state_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        state = {
             "project_name": self.project_name,
             "brief": self.plan.get('brief'),
             "mission": self.plan.get('mission'),
             "audience": self.plan.get('audience'),
             "deliverables_list": self.plan.get('deliverables'),
-            "history": []
+            "history": [],
+            "completed": []
         }
+        return state
 
     def run(self):
         print(f"--- [Orchestrator] Initiating project: {self.project_name} ---")
 
-        for phase in self.workflow.get('phases', []):
+        import json
+        state_path = os.path.join(self.deliverables_path, "state.json")
+        completed = set(self.state.get("completed", []))
+
+        for phase_index, phase in enumerate(self.workflow.get('phases', [])):
             phase_name = phase.get('name')
             print(f"\n{'='*20}\n--- [Orchestrator] Starting Phase: {phase_name} ---\n{'='*20}")
 
-            for step in phase.get('steps', []):
+            for step_index, step in enumerate(phase.get('steps', [])):
                 agent_name = step.get('agent')
                 task_description = step.get('task')
                 output_key = step.get('output')
                 input_keys = step.get('inputs', [])
+                step_id = f"{phase_index}:{step_index}:{agent_name}:{output_key}"
+
+                if step_id in completed:
+                    print(f"--- [Orchestrator] Skipping completed step {step_id}")
+                    continue
 
                 print(f"--- [Orchestrator] Delegating task to '{agent_name}': {task_description} ---")
 
@@ -82,6 +101,15 @@ class Orchestrator:
                     with open(deliverable_path, 'w', encoding='utf-8') as f:
                         f.write(result)
                     print(f"--- [Orchestrator] Intermediate deliverable saved to {deliverable_path} ---")
+
+                # checkpoint
+                completed.add(step_id)
+                self.state["completed"] = sorted(list(completed))
+                try:
+                    with open(state_path, 'w', encoding='utf-8') as f:
+                        json.dump(self.state, f, indent=2)
+                except Exception:
+                    pass
 
         print(f"\n--- [Orchestrator] Project '{self.project_name}' completed successfully! ---")
         print(f"--- [Orchestrator] Final deliverables are in: {self.deliverables_path} ---")

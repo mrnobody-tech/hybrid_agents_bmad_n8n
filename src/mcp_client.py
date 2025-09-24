@@ -11,6 +11,7 @@ import json
 import os
 import uuid
 from dataclasses import dataclass
+import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 
@@ -149,20 +150,36 @@ class MCPClient:
                 )
             return MCPResponse(method, self._simulation_payloads[key])
 
-        response = self._session.post(
-            f"{self.base_url}/mcp",
-            data=json.dumps(payload),
-            timeout=self.timeout,
-        )
-        try:
-            data = response.json()
-        except ValueError as exc:
-            raise MCPClientError(f"Non-JSON response from MCP server: {response.text}") from exc
+        # Simple retry/backoff loop
+        attempt = 0
+        max_attempts = 3
+        backoff = 1.0
+        last_exc: Optional[Exception] = None
+        while attempt < max_attempts:
+            try:
+                response = self._session.post(
+                    f"{self.base_url}/mcp",
+                    data=json.dumps(payload),
+                    timeout=self.timeout,
+                )
+                data = response.json()
+                if "error" in data:
+                    raise MCPClientError(str(data["error"]))
+                # Optional record mode
+                if os.getenv("MCP_MODE", "real").lower() == "record":
+                    fixtures_path = os.getenv("MCP_SIMULATION_FIXTURES")
+                    if fixtures_path:
+                        self._append_fixture(fixtures_path, method, params, data)
+                return MCPResponse(method, data)
+            except Exception as exc:  # broad to capture JSON + HTTP issues
+                last_exc = exc
+                attempt += 1
+                if attempt >= max_attempts:
+                    break
+                time.sleep(backoff)
+                backoff *= 2
 
-        if "error" in data:
-            raise MCPClientError(str(data["error"]))
-
-        return MCPResponse(method, data)
+        raise MCPClientError(f"MCP request failed after retries: {last_exc}")
 
     @staticmethod
     def _simulation_key(method: str, params: Optional[Dict[str, Any]]) -> str:
@@ -172,6 +189,16 @@ class MCPClient:
         args = params.get("arguments") if params else {}
         args_key = json.dumps(args, sort_keys=True)
         return f"tools/call::{name}::{args_key}"
+
+    def _append_fixture(self, fixtures_path: str, method: str, params: Optional[Dict[str, Any]], data: Dict[str, Any]) -> None:
+        path = Path(fixtures_path).expanduser()
+        try:
+            store = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+            key = self._simulation_key(method, params)
+            store[key] = data
+            path.write_text(json.dumps(store, indent=2), encoding="utf-8")
+        except Exception:
+            pass
 
 
 __all__ = ["MCPClient", "MCPClientError", "MCPResponse"]
