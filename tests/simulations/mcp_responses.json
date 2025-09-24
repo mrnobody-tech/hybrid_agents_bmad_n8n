@@ -1,0 +1,39 @@
+{
+  "initialize": {
+    "jsonrpc": "2.0",
+    "result": {
+      "protocolVersion": "1.0",
+      "capabilities": {
+        "tools": {},
+        "resources": {}
+      },
+      "serverInfo": {
+        "name": "n8n-documentation-mcp",
+        "version": "simulation"
+      }
+    },
+    "id": "simulation-initialize"
+  },
+  "tools/list": {
+    "jsonrpc": "2.0",
+    "result": {
+      "tools": [
+        {"name": "get_node_essentials", "description": "Retrieve essential configuration info for an n8n node."},
+        {"name": "get_workflow_examples", "description": "Return curated workflow examples."}
+      ]
+    },
+    "id": "simulation-tools-list"
+  },
+  "tools/call::get_node_essentials::{\"nodeType\": \"nodes-base.httpRequest\"}": {
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"nodeType\": \"nodes-base.httpRequest\",\n  \"description\": \"Performs HTTP requests.\",\n  \"criticalProperties\": [\"method\", \"url\", \"authentication\"]\n}"
+        }
+      ]
+    },
+    "id": "simulation-tools-call-http-request"
+  }
+}

@@ -8,3 +8,5 @@ audience: "Who is the target audience for this project?"
 deliverables:
   - "A list of the expected outputs from the project."
   - "This could be a workflow file, a report, or any other artifact."
+
+# Optional: MCP tool hints can be provided directly in the workflow definition.

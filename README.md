@@ -43,4 +43,48 @@ The system operates on a Hybrid Hierarchical Model. A master **Orchestrator** ag
    poetry run python src/main.py --plan project_plans/invoice_automation.yml
    ```
 
-The Orchestrator will now execute the plan as defined in the associated workflow YAML.
+The Orchestrator will now execute the plan as defined in the associated workflow YAML. Each step can optionally invoke n8n-MCP tools (see below) and the results are persisted to `deliverables/<project_name>/`.
+
+## 4. Integrating with the n8n-MCP Server
+
+The project now speaks the MCP JSON-RPC API directly. Configure the following variables in your `.env`:
+
+```
+N8N_MCP_URL=http://localhost:3000
+MCP_AUTH_TOKEN=replace-with-your-token
+MCP_MODE=real          # or "simulation"
+MCP_SIMULATION_FIXTURES=tests/simulations/mcp_responses.json
+```
+
+Run the health check script to verify the connection:
+
+```bash
+poetry run python scripts/mcp_sanity_check.py
+```
+
+### Supplying MCP tool calls from a workflow
+
+Workflow steps can request MCP tool results before the LLM agent runs. Add an `mcp_tools` block to a step, for example:
+
+```yaml
+- agent: "n8n_architect"
+  task: "Design the workflow architecture"
+  inputs: ["prd_content"]
+  mcp_tools:
+    - name: "get_node_essentials"
+      arguments:
+        nodeType: "nodes-base.httpRequest"
+      alias: "http_request_reference"
+  output: "architecture_content"
+```
+
+The tool responses are injected into the agent context under `MCP_RESULTS` so prompts can cite accurate node metadata.
+
+### Simulation Mode
+
+Set `MCP_MODE=simulation` and point `MCP_SIMULATION_FIXTURES` at `tests/simulations/mcp_responses.json` to run without a live container. The fixtures ship with a minimal response set and can be extended for richer test scenarios.
+
+## 5. Environment File Handling
+
+- Template `.env` files live under `~/Desktop/KEYS_TOTATE` on this machine and remain outside version control.
+- The repository includes `.env.example` for reference only. Real credentials must never be committed; the pre-commit hook blocks accidental `.env` entries while allowing `.env.example`.

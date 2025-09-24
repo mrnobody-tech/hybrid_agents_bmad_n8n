@@ -1,6 +1,7 @@
 import yaml
 import os
 from agent_runner import AgentRunner
+from mcp_client import MCPClient
 
 class Orchestrator:
     def __init__(self, plan_path: str):
@@ -15,7 +16,14 @@ class Orchestrator:
 
         self.workflow = self._load_workflow()
         self.state = self._initialize_state()
-        self.agent_runner = AgentRunner()
+
+        self.mcp_client = MCPClient.from_env()
+        if self.mcp_client:
+            print("[Orchestrator] MCP client detected and will be used for tool augmentation.")
+        else:
+            print("[Orchestrator] MCP client not configured. Set N8N_MCP_URL and MCP_AUTH_TOKEN to enable.")
+
+        self.agent_runner = AgentRunner(mcp_client=self.mcp_client)
 
     def _load_workflow(self) -> dict:
         workflow_file = self.plan.get("workflow_definition")
@@ -62,7 +70,8 @@ class Orchestrator:
                 context = {key: self.state.get(key) for key in input_keys}
                 context['task'] = task_description
 
-                result = self.agent_runner.run_agent(agent_name, context)
+                mcp_tools = step.get('mcp_tools') if self.mcp_client else None
+                result = self.agent_runner.run_agent(agent_name, context, mcp_tools=mcp_tools)
 
                 if output_key:
                     print(f"--- [Orchestrator] Storing output in state key: '{output_key}' ---")

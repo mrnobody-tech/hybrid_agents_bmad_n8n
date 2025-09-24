@@ -12,3 +12,6 @@ __pycache__/
 /.mypy_cache/
 /.pytest_cache/
 /.idea/
+
+# Local documentation
+private-notes/
