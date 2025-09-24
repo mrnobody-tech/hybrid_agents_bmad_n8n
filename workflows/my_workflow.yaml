@@ -1,0 +1,11 @@
+phases:
+  - name: "Phase 1: Planning"
+    steps:
+      - agent: "PM"
+        task: "Create a detailed plan for the project."
+        output: "project_plan"
+        inputs:
+          - "brief"
+          - "mission"
+          - "audience"
+          - "deliverables_list"

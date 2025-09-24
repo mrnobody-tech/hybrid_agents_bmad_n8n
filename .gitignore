@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Environments
+.env
+.env.local
+/.venv/
+/.mypy_cache/
+/.pytest_cache/
+/.idea/

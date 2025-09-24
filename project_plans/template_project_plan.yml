@@ -1,0 +1,10 @@
+project_name: "My New Project"
+workflow_definition: "my_workflow.yaml" # This should be the name of your workflow file in the workflows directory
+
+# --- BMAD Sections ---
+brief: "A one-sentence description of the project."
+mission: "A detailed description of the project's goals and what it should accomplish."
+audience: "Who is the target audience for this project?"
+deliverables:
+  - "A list of the expected outputs from the project."
+  - "This could be a workflow file, a report, or any other artifact."
