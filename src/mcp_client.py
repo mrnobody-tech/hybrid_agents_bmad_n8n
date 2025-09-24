@@ -104,6 +104,32 @@ class MCPClient:
             return first.get("text", "")
         return json.dumps(first, indent=2)
 
+    # ----------------------- High-level helpers -----------------------
+    def has_tool(self, name: str) -> bool:
+        return any(t.get("name") == name for t in self.list_tools())
+
+    def require_tools(self, names: Iterable[str]) -> None:
+        available = {t.get("name") for t in self.list_tools()}
+        missing = [n for n in names if n not in available]
+        if missing:
+            raise MCPClientError(f"Missing required MCP tools: {', '.join(missing)}")
+
+    # Management wrappers (if server exposes n8n_* tools)
+    def create_workflow(self, name: str, nodes: Optional[list] = None, connections: Optional[dict] = None, settings: Optional[dict] = None) -> Dict[str, Any]:
+        args: Dict[str, Any] = {"name": name, "nodes": nodes or [], "connections": connections or {}}
+        if settings:
+            args["settings"] = settings
+        return self.call_tool("n8n_create_workflow", args)
+
+    def get_workflow(self, workflow_id: str) -> Dict[str, Any]:
+        return self.call_tool("n8n_get_workflow", {"id": workflow_id})
+
+    def get_workflow_details(self, workflow_id: str) -> Dict[str, Any]:
+        return self.call_tool("n8n_get_workflow_details", {"id": workflow_id})
+
+    def update_partial_workflow(self, workflow_id: str, operations: list, validate_only: bool = False) -> Dict[str, Any]:
+        return self.call_tool("n8n_update_partial_workflow", {"id": workflow_id, "operations": operations, "validateOnly": validate_only})
+
     # ------------------------------------------------------------------
     def _execute(self, method: str, params: Optional[Dict[str, Any]] = None) -> MCPResponse:
         request_id = str(uuid.uuid4())

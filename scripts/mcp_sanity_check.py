@@ -27,13 +27,14 @@ def main() -> None:
         tools = list(client.list_tools())
         print(f"- tools/list -> {len(tools)} tools available")
         if tools:
-            sample = tools[0]
-            print(f"  Sample tool: {sample['name']}")
-            if client.mode == "real":
-                print("  (call `tools/call` manually to avoid heavy responses)")
+            names = [t['name'] for t in tools]
+            print(f"  Tools: {', '.join(names)}")
+            if client.mode == "simulation":
+                # Use a known fixture shape
+                result = client.call_tool_text('get_node_essentials', {'nodeType': 'nodes-base.httpRequest'})
+                print(f"- tools/call(get_node_essentials) -> {result[:120]}...")
             else:
-                result = client.call_tool_text(sample['name'], {})
-                print(f"- tools/call -> {result[:120]}...")
+                print("  (Real mode: tools/call not executed in sanity script)")
     except MCPClientError as exc:
         print(f"MCP sanity check failed: {exc}")
 
