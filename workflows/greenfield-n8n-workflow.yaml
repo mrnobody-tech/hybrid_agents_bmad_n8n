@@ -1,0 +1,40 @@
+workflow_name: "Greenfield n8n Workflow Development"
+version: "1.0"
+
+phases:
+  - name: "Phase 1: Project Planning and Architecture"
+    description: "Define the project requirements and design the high-level solution."
+    steps:
+      - agent: "pm"
+        task: "Analyze the project brief, mission, and audience to generate a formal Product Requirements Document (PRD)."
+        inputs: ["brief", "mission", "audience"]
+        output: "prd_content"
+
+      - agent: "n8n_architect"
+        task: "Using the PRD as input, create a detailed Architecture Specification for the n8n workflow. Specify all required nodes, their configuration, data flow, and error handling."
+        inputs: ["prd_content"]
+        output: "architecture_content"
+
+      - agent: "HumanReview"
+        prompt: "The PRD and Architecture Specification have been generated. Please review them in the deliverables folder. Do you approve?"
+
+  - name: "Phase 2: Implementation and Development"
+    description: "Build the n8n workflow based on the approved architecture."
+    steps:
+      - agent: "n8n_developer"
+        task: "Implement the n8n workflow step-by-step according to the Architecture Specification. Your final output must be a single, complete JSON object representing the entire n8n workflow."
+        inputs: ["architecture_content"]
+        output: "workflow_json"
+
+  - name: "Phase 3: Quality Assurance and Review"
+    description: "Verify that the implemented workflow meets the requirements."
+    steps:
+      - agent: "code-reviewer"
+        task: "Perform a static analysis of the generated workflow JSON. Check for best practices, efficiency, and maintainability issues."
+        inputs: ["workflow_json"]
+        output: "code_review_feedback"
+
+      - agent: "n8n-mcp-tester"
+        task: "Develop a test plan based on the PRD. Describe the steps you would take to execute the n8n workflow and verify that the execution completes successfully and that the output matches expectations."
+        inputs: ["workflow_json", "prd_content"]
+        output: "qa_summary"

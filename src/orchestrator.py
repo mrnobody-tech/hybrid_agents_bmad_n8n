@@ -1,6 +1,5 @@
 import yaml
 import os
-import time
 from agent_runner import AgentRunner
 
 class Orchestrator:
@@ -38,7 +37,7 @@ class Orchestrator:
             "mission": self.plan.get('mission'),
             "audience": self.plan.get('audience'),
             "deliverables_list": self.plan.get('deliverables'),
-            "history": [] # To track conversation history
+            "history": []
         }
 
     def run(self):
@@ -46,8 +45,7 @@ class Orchestrator:
 
         for phase in self.workflow.get('phases', []):
             phase_name = phase.get('name')
-            print(f"\n{'='*20}\n--- [Orchestrator] Starting Phase: {phase_name} ---\
-{'='*20}")
+            print(f"\n{'='*20}\n--- [Orchestrator] Starting Phase: {phase_name} ---\n{'='*20}")
 
             for step in phase.get('steps', []):
                 agent_name = step.get('agent')
@@ -58,7 +56,7 @@ class Orchestrator:
                 print(f"--- [Orchestrator] Delegating task to '{agent_name}': {task_description} ---")
 
                 if agent_name == "HumanReview":
-                    self.human_review_step(step.get('prompt', "Do you approve the current plan to proceed?"))
+                    self.human_review_step(step.get('prompt', "Do you approve to proceed?"))
                     continue
 
                 context = {key: self.state.get(key) for key in input_keys}
@@ -71,7 +69,6 @@ class Orchestrator:
                     self.state[output_key] = result
                     self.state["history"].append({"agent": agent_name, "task": task_description, "result": result})
 
-                    # Save intermediate deliverable
                     deliverable_path = os.path.join(self.deliverables_path, f"{output_key}.md")
                     with open(deliverable_path, 'w', encoding='utf-8') as f:
                         f.write(result)
@@ -82,7 +79,7 @@ class Orchestrator:
 
     def human_review_step(self, prompt_text: str):
         print(f"\n--- [Orchestrator] PAUSING for Human Review ---")
-        print("--- Please review the generated deliverables in the deliverables folder. ---")
+        print("--- Review generated deliverables in the deliverables folder. ---")
 
         while True:
             action = input(f"{prompt_text} (y/n): ").lower()
