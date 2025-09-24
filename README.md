@@ -106,3 +106,20 @@ PYTHONPATH=src python3 scripts/cli.py resume --plan project_plans/template_proje
 # Package deliverables for transport
 PYTHONPATH=src python3 scripts/cli.py package --project "My New Project" --output out.zip
 ```
+
+## 7. Local Service Matrix (Non-Destructive)
+
+Quickly verify local ports and file presence for your dev stack:
+
+```bash
+PYTHONPATH=src python3 scripts/service_matrix.py
+```
+
+This probes:
+- n8n at `http://localhost:5678/rest/workflows` (read-only; 200/401 indicates reachability)
+- Supabase at `http://localhost:8000`
+- Postgres TCP at `127.0.0.1:5432`
+- n8n-mcp stdio binary + nodes.db presence
+- Filesystem root path presence
+
+It prints a JSON report; no writes occur.
