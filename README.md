@@ -123,3 +123,35 @@ This probes:
 - Filesystem root path presence
 
 It prints a JSON report; no writes occur.
+
+## 8. Using the HTTP MCP Server (for the Orchestrator)
+
+The orchestrator speaks HTTP JSON-RPC. Run the n8n-MCP fixed HTTP server in parallel with your IDE's stdio profile.
+
+1) Start n8n-MCP HTTP (example)
+
+```bash
+cd /Volumes/SSD_OSX/Devssd/Projects/n8n-mcp
+export HOST=127.0.0.1 PORT=3000 AUTH_TOKEN=your_dev_token \
+  N8N_API_URL=http://localhost:5678 N8N_API_KEY=your_n8n_key \
+  NODE_DB_PATH=/Volumes/SSD_OSX/Devssd/Projects/n8n-mcp/data/nodes.db \
+  LOG_LEVEL=info
+node dist/http-server.js
+```
+
+2) Configure this repo's `.env`
+
+```
+N8N_MCP_URL=http://127.0.0.1:3000
+MCP_AUTH_TOKEN=your_dev_token
+MCP_MODE=real
+```
+
+3) Verify and run
+
+```bash
+PYTHONPATH=src python3 scripts/cli.py check --require-management
+PYTHONPATH=src python3 scripts/cli.py run --plan project_plans/template_project_plan.yml
+```
+
+Keep your IDE using stdio; the orchestrator uses HTTP simultaneously.
